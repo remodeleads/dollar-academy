@@ -1,0 +1,21 @@
+{
+  "WATCH_DIR": "/Users/Shared/ZoomRecordings",
+  "CALENDAR_ID": "primary",
+  "TIMEZONE": "",
+
+  "APPEND_DATE": true,
+
+  "RULES": [
+    { "name": "sales", "keyword": "סוכנות פרסום", "drive_folder_id": "PASTE_SALES_FOLDER_ID" },
+    { "name": "team",  "keyword": "Team Session", "drive_folder_id": "PASTE_TEAM_FOLDER_ID" }
+  ],
+
+  "UPLOAD_AUDIO": true,
+  "DELETE_AFTER_UPLOAD": true,
+
+  "STABLE_SECONDS": 20,
+  "POLL_SECONDS": 30,
+  "LOOKUP_WINDOW_MIN": 30,
+  "MATCH_TOLERANCE_MIN": 20,
+  "GRACE_MIN": 15
+}
