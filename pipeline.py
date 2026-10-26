@@ -307,19 +307,23 @@ def trigger_call_analysis(file_id, folder_id, client_name, is_followup=False):
 def trigger_outcome_form(client_name, base_filename, call_time):
     """Trigger a macOS notification + open outcome form in browser."""
     try:
-        # macOS notification
-        script = f'''
-        display notification "✅ Sales call recorded: {client_name}" \\
-            with title "Dollar Academy Sales Pipeline" \\
-            subtitle "Please fill the outcome form"
-        '''
-        os.system(f"osascript -e '{script}'")
+        # Format call time to YYYY-MM-DD for form prefill
+        call_date = call_time.strftime("%Y-%m-%d")
 
-        # Open form in browser (Typeform/Google Form URL)
-        # Replace with your actual form URL
-        form_url = "https://forms.gle/YOUR_FORM_ID"  # TODO: replace with actual form
-        os.system(f"open '{form_url}?prefill_client={client_name}&prefill_time={call_time.isoformat()}'")
-        log.info("Outcome form triggered for %s", client_name)
+        # macOS notification
+        notification_script = f'''
+        display notification "✅ שיחת מכירה הוקלטה בהצלחה" \\
+            with title "אקדמיית הדולר" \\
+            subtitle "בואו למלא את דוח התוצאות"
+        '''
+        os.system(f"osascript -e '{notification_script}'")
+
+        # Open form in browser (localhost form server)
+        form_url = f"http://localhost:8765/form?client={client_name}&date={call_date}"
+        open_browser_script = f'open "{form_url}"'
+        os.system(open_browser_script)
+
+        log.info("✅ Outcome form triggered for %s", client_name)
     except Exception as e:
         log.error("Failed to trigger outcome form: %s", e)
 
