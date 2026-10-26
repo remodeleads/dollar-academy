@@ -35,6 +35,7 @@ import logging
 import os
 import re
 import shutil
+import subprocess
 import sys
 import time
 from datetime import datetime, timedelta, timezone
@@ -284,6 +285,25 @@ def _md5(path, chunk=1 << 20):
 # ---------------------------------------------------------------------------
 # Drive upload + verify
 # ---------------------------------------------------------------------------
+def trigger_call_analysis(file_id, folder_id, client_name, is_followup=False):
+    """Trigger async call analysis (transcription + Claude insights)."""
+    try:
+        cmd = [
+            sys.executable, str(BASE / "call_analyzer.py"),
+            "--file-id", file_id,
+            "--folder-id", folder_id,
+            "--client-name", client_name,
+        ]
+        if is_followup:
+            cmd.append("--followup")
+
+        # Run in background (non-blocking)
+        subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        log.info("Analysis queued for %s (file_id=%s)", client_name, file_id)
+    except Exception as e:
+        log.error("Failed to queue analysis: %s", e)
+
+
 def trigger_outcome_form(client_name, base_filename, call_time):
     """Trigger a macOS notification + open outcome form in browser."""
     try:
@@ -375,12 +395,15 @@ def drive_upload(localfile, folder_id, drive):
 
     local_size = localfile.stat().st_size
     remote_size = int(resp.get("size", -1))
+    file_id = resp.get("id")
     ok = remote_size == local_size
     if resp.get("md5Checksum"):
         ok = ok and resp["md5Checksum"] == _md5(localfile)
     if not ok:
         log.error("verify failed for %s (local=%d remote=%d)", localfile.name, local_size, remote_size)
-    return ok
+        return None
+
+    return file_id  # Return file ID for analysis
 
 
 # ---------------------------------------------------------------------------
@@ -470,9 +493,13 @@ def process_folder(folder, cfg, state, cal, drive, dry=False):
         targets.append(new_audio)
 
     # Upload (verified) — bail before deleting if anything failed
-    if not all(drive_upload(t, rule["drive_folder_id"], drive) for t in targets):
-        log.error("upload/verify failed for %s — leaving local files in place", base)
-        return
+    uploaded_file_ids = []
+    for t in targets:
+        file_id = drive_upload(t, rule["drive_folder_id"], drive)
+        if not file_id:
+            log.error("upload/verify failed for %s — leaving local files in place", base)
+            return
+        uploaded_file_ids.append(file_id)
 
     state["done"][key] = {
         "title": base,
@@ -481,7 +508,8 @@ def process_folder(folder, cfg, state, cal, drive, dry=False):
         "client_name": client_name,
         "is_followup": is_followup,
         "uploaded_at": datetime.now(timezone.utc).isoformat(),
-        "delete_after": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
+        "delete_after": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
+        "video_file_id": uploaded_file_ids[0] if uploaded_file_ids else None
     }
     save_state(state)
     log.info("UPLOADED [%s]  %s  (%d file/s)", rule.get("name"), base, len(targets))
@@ -496,10 +524,11 @@ def process_folder(folder, cfg, state, cal, drive, dry=False):
         save_state(state)
         log.info("SCHEDULED for deletion in 24 hours: %s", folder.name)
 
-    # If this is a sales call, trigger the outcome form
+    # If this is a sales call, trigger analysis + outcome form
     if should_ask_for_outcome(title):
-        log.info("SALES CALL detected — triggering outcome form for %s", client_name)
-        # This will be handled by a separate process/daemon
+        log.info("SALES CALL detected — triggering analysis for %s", client_name)
+        if uploaded_file_ids:
+            trigger_call_analysis(uploaded_file_ids[0], rule["drive_folder_id"], client_name, is_followup)
         trigger_outcome_form(client_name, base, when_local)
 
 
