@@ -284,6 +284,83 @@ def _md5(path, chunk=1 << 20):
 # ---------------------------------------------------------------------------
 # Drive upload + verify
 # ---------------------------------------------------------------------------
+def trigger_outcome_form(client_name, base_filename, call_time):
+    """Trigger a macOS notification + open outcome form in browser."""
+    try:
+        # macOS notification
+        script = f'''
+        display notification "✅ Sales call recorded: {client_name}" \\
+            with title "Dollar Academy Sales Pipeline" \\
+            subtitle "Please fill the outcome form"
+        '''
+        os.system(f"osascript -e '{script}'")
+
+        # Open form in browser (Typeform/Google Form URL)
+        # Replace with your actual form URL
+        form_url = "https://forms.gle/YOUR_FORM_ID"  # TODO: replace with actual form
+        os.system(f"open '{form_url}?prefill_client={client_name}&prefill_time={call_time.isoformat()}'")
+        log.info("Outcome form triggered for %s", client_name)
+    except Exception as e:
+        log.error("Failed to trigger outcome form: %s", e)
+
+
+def cleanup_pending_deletions(state, cfg):
+    """Check for folders scheduled for deletion and delete if 24h has passed."""
+    if not cfg.get("DELETE_AFTER_UPLOAD"):
+        return
+
+    pending = state.get("pending_delete", {})
+    now = datetime.now(timezone.utc)
+    to_delete = []
+
+    for key, info in pending.items():
+        delete_at = datetime.fromisoformat(info["delete_at"])
+        if now >= delete_at:
+            folder_path = Path(info["folder"])
+            if folder_path.exists():
+                try:
+                    shutil.rmtree(folder_path)
+                    log.info("DELETED (after 24h): %s", folder_path.name)
+                    to_delete.append(key)
+                except Exception as e:
+                    log.error("Failed to delete %s: %s", folder_path, e)
+            else:
+                to_delete.append(key)  # already gone
+
+    for key in to_delete:
+        del pending[key]
+
+    if to_delete:
+        state["pending_delete"] = pending
+        save_state(state)
+
+
+def export_insights_csv(state, output_file):
+    """Export all completed calls to CSV for analysis."""
+    import csv
+
+    with open(output_file, 'w', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=[
+            'date', 'client_name', 'call_type', 'rule', 'duration_minutes',
+            'uploaded_at', 'outcome', 'next_action'
+        ])
+        writer.writeheader()
+
+        for key, info in state.get("done", {}).items():
+            writer.writerow({
+                'date': info.get('at', ''),
+                'client_name': info.get('client_name', ''),
+                'call_type': 'Follow-up' if info.get('is_followup') else 'Initial',
+                'rule': info.get('rule', ''),
+                'duration_minutes': '',  # TODO: extract from recording metadata
+                'uploaded_at': info.get('uploaded_at', ''),
+                'outcome': info.get('outcome', ''),
+                'next_action': info.get('next_action', '')
+            })
+
+    log.info("Exported insights to %s", output_file)
+
+
 def drive_upload(localfile, folder_id, drive):
     meta = {"name": localfile.name, "parents": [folder_id]}
     media = MediaFileUpload(str(localfile), resumable=True, chunksize=64 * 1024 * 1024)
@@ -309,6 +386,37 @@ def drive_upload(localfile, folder_id, drive):
 # ---------------------------------------------------------------------------
 # Core: process one meeting folder
 # ---------------------------------------------------------------------------
+def extract_client_name(title_or_topic):
+    """Extract client name from event title.
+    Format: 'פגישת ייעוץ והתאמה למסלול ההכשרה - <CLIENT_NAME> + אקדמיית הדולר'
+    Returns the client name between the dashes.
+    """
+    if not title_or_topic:
+        return None
+    # Look for pattern: ... - CLIENT_NAME + אקדמיית הדולר
+    match = re.search(r'-\s*([^+]+?)\s*\+', title_or_topic)
+    if match:
+        return match.group(1).strip()
+    return None
+
+
+def is_sales_call(title):
+    """Check if this is a sales call (contains 'ייעוץ והתאמה')."""
+    if not title:
+        return False
+    return 'ייעוץ והתאמה' in title
+
+
+def format_filename_date(when_local):
+    """Format date as DD/MM/YYYY."""
+    return when_local.strftime("%d/%m/%Y")
+
+
+def should_ask_for_outcome(title):
+    """Return True if we should show the form to ask about call outcome."""
+    return is_sales_call(title)
+
+
 def process_folder(folder, cfg, state, cal, drive, dry=False):
     key = folder.name
     if key in state["done"] or key in state["skip"]:
@@ -335,10 +443,14 @@ def process_folder(folder, cfg, state, cal, drive, dry=False):
         save_state(state)
         return
 
-    name_source = title or topic  # prefer the calendar title; fall back to the Zoom name
-    base = sanitize(name_source)
-    if cfg["APPEND_DATE"]:
-        base = f"{base} {when_local:%Y-%m-%d}"
+    # Format filename: DD/MM/YYYY CLIENT_NAME - פגישה מקצועית [/ המשך]
+    date_str = format_filename_date(when_local)
+    client_name = extract_client_name(title) or "Unknown"
+    is_followup = title and title.startswith("המשך") if title else False
+    call_type = "המשך פגישה מקצועית" if is_followup else "פגישה מקצועית"
+    base = f"{date_str} {client_name} - {call_type}"
+    base = sanitize(base)
+
     log.info("MATCH [%s]  %s  ->  '%s'", rule.get("name", "?"), folder.name, base)
 
     if dry:
@@ -351,8 +463,9 @@ def process_folder(folder, cfg, state, cal, drive, dry=False):
     new_video = unique_path(folder / f"{base}{video.suffix}")
     video.rename(new_video)
     targets.append(new_video)
+
     if cfg["UPLOAD_AUDIO"] and audio and audio.exists():
-        new_audio = unique_path(folder / f"{base}{audio.suffix}")
+        new_audio = unique_path(folder / f"{base} audio{audio.suffix}")
         audio.rename(new_audio)
         targets.append(new_audio)
 
@@ -361,16 +474,33 @@ def process_folder(folder, cfg, state, cal, drive, dry=False):
         log.error("upload/verify failed for %s — leaving local files in place", base)
         return
 
-    state["done"][key] = {"title": base, "rule": rule.get("name"), "at": when_local.isoformat()}
+    state["done"][key] = {
+        "title": base,
+        "rule": rule.get("name"),
+        "at": when_local.isoformat(),
+        "client_name": client_name,
+        "is_followup": is_followup,
+        "uploaded_at": datetime.now(timezone.utc).isoformat(),
+        "delete_after": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
+    }
     save_state(state)
     log.info("UPLOADED [%s]  %s  (%d file/s)", rule.get("name"), base, len(targets))
 
-    if cfg["DELETE_AFTER_UPLOAD"]:
-        try:
-            shutil.rmtree(folder)
-            log.info("DELETED local folder: %s", folder.name)
-        except Exception as e:  # pragma: no cover
-            log.error("could not delete %s: %s", folder, e)
+    # Mark for deletion after 24 hours (if enabled)
+    if cfg.get("DELETE_AFTER_UPLOAD"):
+        state["pending_delete"] = state.get("pending_delete", {})
+        state["pending_delete"][key] = {
+            "folder": str(folder),
+            "delete_at": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
+        }
+        save_state(state)
+        log.info("SCHEDULED for deletion in 24 hours: %s", folder.name)
+
+    # If this is a sales call, trigger the outcome form
+    if should_ask_for_outcome(title):
+        log.info("SALES CALL detected — triggering outcome form for %s", client_name)
+        # This will be handled by a separate process/daemon
+        trigger_outcome_form(client_name, base, when_local)
 
 
 def scan(cfg, state, cal, drive, dry=False):
@@ -378,6 +508,10 @@ def scan(cfg, state, cal, drive, dry=False):
     if not root.is_dir():
         log.error("WATCH_DIR does not exist: %s", root)
         return
+
+    # First, clean up any pending deletions
+    cleanup_pending_deletions(state, cfg)
+
     for folder in sorted(p for p in root.iterdir() if p.is_dir()):
         try:
             process_folder(folder, cfg, state, cal, drive, dry)

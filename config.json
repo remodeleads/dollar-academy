@@ -1,0 +1,31 @@
+{
+  "WATCH_DIR": "/Users/Shared/ZoomRecordings",
+  "CALENDAR_ID": "primary",
+  "TIMEZONE": "",
+
+  "APPEND_DATE": false,
+
+  "RULES": [
+    {
+      "name": "sales_calls",
+      "keyword": "ייעוץ והתאמה",
+      "drive_folder_id": "1B8yUWhJyHvGDvwqj7k3HFvLsugj8u4nq",
+      "description": "פגישות ייעוץ והתאמה - מעומדים פעילים"
+    }
+  ],
+
+  "UPLOAD_AUDIO": true,
+  "DELETE_AFTER_UPLOAD": true,
+  "DELETE_DELAY_HOURS": 24,
+
+  "CLOSED_DEALS_FOLDER": "1g6QF0lnoU-HiEsKdxt6vodHMiQY7VGrd",
+  "OPEN_LEADS_FOLDER": "1B8yUWhJyHvGDvwqj7k3HFvLsugj8u4nq",
+
+  "STABLE_SECONDS": 20,
+  "POLL_SECONDS": 30,
+  "LOOKUP_WINDOW_MIN": 30,
+  "MATCH_TOLERANCE_MIN": 20,
+  "GRACE_MIN": 15,
+
+  "FORM_URL": "https://forms.gle/YOUR_FORM_ID"
+}
