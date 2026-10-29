@@ -40,6 +40,7 @@ import sys
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from urllib.parse import quote
 
 try:
     from zoneinfo import ZoneInfo
@@ -314,7 +315,9 @@ def trigger_outcome_form(client_name, base_filename, call_time, title=None, topi
         meeting_type, needs_class = classify_meeting_type(title, topic)
 
         # Build form URL with meeting type if detected
-        form_params = [f"client={client_name}", f"date={call_date}"]
+        form_params = [f"client={quote(client_name)}", f"date={call_date}"]
+        if title:
+            form_params.append(f"title={quote(title)}")
         if meeting_type:
             form_params.append(f"meeting_type={meeting_type}")
 

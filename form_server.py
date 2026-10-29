@@ -100,11 +100,24 @@ def process_outcome(submission, state):
                 log.info("🔄 OPEN: %s → open leads folder", client_name)
 
             elif outcome == "follow_needed":
+                routing = "OPEN_LEADS"
+                state["done"][matching_key]["routing"] = routing
                 if followup_date:
                     reminder_time = datetime.fromisoformat(followup_date).isoformat()
-                    state["done"][matching_key]["routing"] = "OPEN_LEADS"
                     state["done"][matching_key]["reminder_at"] = reminder_time
                     log.info("⏳ FOLLOW-UP SET: %s → %s", client_name, followup_date)
+                else:
+                    log.info("📞 FOLLOW-UP NEEDED: %s", client_name)
+
+            elif outcome == "not_interested":
+                routing = "CLOSED_NEGATIVE"
+                state["done"][matching_key]["routing"] = routing
+                log.info("❌ NOT INTERESTED: %s", client_name)
+
+            elif outcome == "not_suitable":
+                routing = "CLOSED_NEGATIVE"
+                state["done"][matching_key]["routing"] = routing
+                log.info("🚫 NOT SUITABLE: %s", client_name)
 
         elif meeting_type == "team_call":
             routing = "TEAM_FOLDER"

@@ -31,30 +31,34 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #001a4d 0%, #0033cc 100%);
-            color: white;
-            padding: 40px 30px;
+            background: white;
+            border-bottom: 3px solid #000;
+            padding: 30px;
             text-align: center;
         }
 
         .logo {
-            font-size: 48px;
-            font-weight: 900;
-            letter-spacing: -2px;
-            margin-bottom: 10px;
-            font-family: 'Courier New', monospace;
+            width: 80px;
+            height: auto;
+            margin: 0 auto 20px;
+        }
+
+        .logo svg {
+            width: 100%;
+            height: auto;
         }
 
         .header-title {
             font-size: 20px;
             font-weight: 600;
             margin-bottom: 5px;
+            color: #000;
         }
 
         .header-subtitle {
             font-size: 14px;
-            opacity: 0.9;
             font-weight: 300;
+            color: #666;
         }
 
         .form-content {
@@ -277,7 +281,16 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="logo">D</div>
+            <div class="logo">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Outer D shape -->
+                    <path d="M 20 15 L 50 15 Q 70 15 70 50 Q 70 85 50 85 L 20 85 Z"
+                          fill="none" stroke="black" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+                    <!-- Inner D shape -->
+                    <path d="M 30 30 L 50 30 Q 60 30 60 50 Q 60 70 50 70 L 30 70 Z"
+                          fill="none" stroke="black" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
             <div class="header-title">דוח תוצאות פגישה</div>
             <div class="header-subtitle">אקדמיית הדולר - מערכת ניתוח שיחות מכירה</div>
         </div>
@@ -330,38 +343,32 @@
                     <input type="date" id="callDate" name="callDate" readonly style="background: #f5f5f5; cursor: not-allowed;">
                 </div>
 
-                <!-- Call Outcome -->
-                <div class="form-group">
+                <!-- Call Outcome (Required for sales calls) -->
+                <div class="form-group" id="outcomeGroup">
                     <label>מה היתה תוצאת הפגישה? <span class="required">*</span></label>
                     <div class="radio-group">
                         <div class="radio-option">
                             <label class="option-label">
                                 <input type="radio" name="outcome" value="closed_positive" required>
-                                סגור בהצלחה (נסלק בחיובי) ✅
-                            </label>
-                        </div>
-                        <div class="radio-option">
-                            <label class="option-label">
-                                <input type="radio" name="outcome" value="closed_negative" required>
-                                סגור שלילי (לא מעוניין) ❌
-                            </label>
-                        </div>
-                        <div class="radio-option">
-                            <label class="option-label">
-                                <input type="radio" name="outcome" value="open_interested" required>
-                                פתוח - מעוניין (צפוי להמשך) 🔄
-                            </label>
-                        </div>
-                        <div class="radio-option">
-                            <label class="option-label">
-                                <input type="radio" name="outcome" value="open_thinking" required>
-                                פתוח - צריך לחשוב (חוזר בעצמו) ⏳
+                                ✅ נסלק (סגור בהצלחה)
                             </label>
                         </div>
                         <div class="radio-option">
                             <label class="option-label">
                                 <input type="radio" name="outcome" value="follow_needed" required>
-                                צריך פולואפ בתאריך מסוים
+                                📞 פולואפ בתאריך מסוים
+                            </label>
+                        </div>
+                        <div class="radio-option">
+                            <label class="option-label">
+                                <input type="radio" name="outcome" value="not_interested" required>
+                                ❌ לא מעוניין
+                            </label>
+                        </div>
+                        <div class="radio-option">
+                            <label class="option-label">
+                                <input type="radio" name="outcome" value="not_suitable" required>
+                                🚫 לא מתאים / לא רלוונטי
                             </label>
                         </div>
                     </div>
@@ -421,14 +428,23 @@
         const meetingType = params.get('meeting_type');
         const clientName = decodeURIComponent(params.get('client') || '');
         const dateStr = params.get('date');
+        const meetingTitle = decodeURIComponent(params.get('title') || '');
 
         // Handle meeting type detection
         const meetingTypeGroup = document.getElementById('meetingTypeGroup');
         const customMeetingGroup = document.getElementById('customMeetingGroup');
+        const outcomeGroup = document.getElementById('outcomeGroup');
 
         if (meetingType) {
             // Meeting type was pre-detected
             document.querySelector(`input[name="meetingType"][value="${meetingType}"]`).checked = true;
+
+            // Show/hide outcome group based on meeting type
+            if (meetingType === 'sales_call') {
+                outcomeGroup.style.display = 'block';
+            } else {
+                outcomeGroup.style.display = 'none';
+            }
         } else {
             // Show meeting type selector if not pre-detected
             meetingTypeGroup.style.display = 'block';
@@ -438,14 +454,15 @@
         document.querySelectorAll('input[name="meetingType"]').forEach(radio => {
             radio.addEventListener('change', (e) => {
                 customMeetingGroup.style.display = e.target.value === 'other' ? 'block' : 'none';
+                outcomeGroup.style.display = e.target.value === 'sales_call' ? 'block' : 'none';
                 if (e.target.value !== 'other') {
                     document.getElementById('customMeetingName').value = '';
                 }
             });
         });
 
-        // Pre-fill client name and date
-        document.getElementById('clientName').value = clientName;
+        // Pre-fill from calendar event
+        document.getElementById('clientName').value = clientName || meetingTitle || '';
         if (dateStr) {
             document.getElementById('callDate').value = dateStr;
         }
