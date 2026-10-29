@@ -304,26 +304,35 @@ def trigger_call_analysis(file_id, folder_id, client_name, is_followup=False):
         log.error("Failed to queue analysis: %s", e)
 
 
-def trigger_outcome_form(client_name, base_filename, call_time):
+def trigger_outcome_form(client_name, base_filename, call_time, title=None, topic=None):
     """Trigger a macOS notification + open outcome form in browser."""
     try:
         # Format call time to YYYY-MM-DD for form prefill
         call_date = call_time.strftime("%Y-%m-%d")
 
+        # Detect meeting type
+        meeting_type, needs_class = classify_meeting_type(title, topic)
+
+        # Build form URL with meeting type if detected
+        form_params = [f"client={client_name}", f"date={call_date}"]
+        if meeting_type:
+            form_params.append(f"meeting_type={meeting_type}")
+
+        form_url = "http://localhost:8765/form?" + "&".join(form_params)
+
         # macOS notification
         notification_script = f'''
-        display notification "✅ שיחת מכירה הוקלטה בהצלחה" \\
+        display notification "✅ פגישה הוקלטה בהצלחה" \\
             with title "אקדמיית הדולר" \\
             subtitle "בואו למלא את דוח התוצאות"
         '''
         os.system(f"osascript -e '{notification_script}'")
 
-        # Open form in browser (localhost form server)
-        form_url = f"http://localhost:8765/form?client={client_name}&date={call_date}"
+        # Open form in browser
         open_browser_script = f'open "{form_url}"'
         os.system(open_browser_script)
 
-        log.info("✅ Outcome form triggered for %s", client_name)
+        log.info("✅ Outcome form triggered for %s (type: %s)", client_name, meeting_type or "unknown")
     except Exception as e:
         log.error("Failed to trigger outcome form: %s", e)
 
@@ -439,9 +448,36 @@ def format_filename_date(when_local):
     return when_local.strftime("%d/%m/%Y")
 
 
+def classify_meeting_type(title, topic):
+    """Classify meeting type based on title/topic.
+
+    Returns: ('sales_call', 'team_call', 'other', None)
+    - If confidence is high, returns the type + None for "unknown"
+    - If confidence is low, returns (None, 'needs_classification') to trigger form selector
+    """
+    if not title and not topic:
+        return None, "needs_classification"
+
+    haystack = (title or "") + " " + (topic or "")
+    haystack_lower = haystack.lower()
+
+    # Sales call detection (high confidence)
+    if "ייעוץ והתאמה" in haystack or "פגישת ייעוץ" in haystack or "מעמד מכירה" in haystack:
+        return "sales_call", None
+
+    # Team session detection (high confidence)
+    if "team session" in haystack_lower or "צוות" in haystack_lower or "team" in haystack_lower:
+        return "team_call", None
+
+    # No clear match - needs manual classification
+    return None, "needs_classification"
+
+
 def should_ask_for_outcome(title):
     """Return True if we should show the form to ask about call outcome."""
-    return is_sales_call(title)
+    meeting_type, needs_class = classify_meeting_type(title, None)
+    # Show form if it's a sales call OR if it needs classification
+    return meeting_type == "sales_call" or needs_class == "needs_classification"
 
 
 def process_folder(folder, cfg, state, cal, drive, dry=False):
@@ -528,12 +564,12 @@ def process_folder(folder, cfg, state, cal, drive, dry=False):
         save_state(state)
         log.info("SCHEDULED for deletion in 24 hours: %s", folder.name)
 
-    # If this is a sales call, trigger analysis + outcome form
+    # If this needs classification or is a sales call, trigger analysis + outcome form
     if should_ask_for_outcome(title):
-        log.info("SALES CALL detected — triggering analysis for %s", client_name)
+        log.info("Form needed — triggering analysis for %s", client_name)
         if uploaded_file_ids:
             trigger_call_analysis(uploaded_file_ids[0], rule["drive_folder_id"], client_name, is_followup)
-        trigger_outcome_form(client_name, base, when_local)
+        trigger_outcome_form(client_name, base, when_local, title, topic)
 
 
 def scan(cfg, state, cal, drive, dry=False):

@@ -50,8 +50,15 @@ def save_state(state):
 def process_outcome(submission, state):
     """Process the outcome submission and update routing."""
     client_name = submission.get("clientName", "Unknown")
+    meeting_type = submission.get("meetingType", "unknown")
     outcome = submission.get("outcome", "")
     followup_date = submission.get("followupDate", "")
+
+    # Handle custom meeting name if "other" type
+    if meeting_type == "other":
+        custom_name = submission.get("customMeetingName", "")
+        if custom_name:
+            meeting_type = f"other_{custom_name}"
 
     log.info("Processing outcome for %s: %s", client_name, outcome)
 
@@ -64,6 +71,7 @@ def process_outcome(submission, state):
 
     if matching_key:
         state["done"][matching_key].update({
+            "meeting_type": meeting_type,
             "outcome": outcome,
             "followup_date": followup_date,
             "next_steps": submission.get("nextSteps", ""),
@@ -73,28 +81,40 @@ def process_outcome(submission, state):
             "outcome_submitted_at": submission.get("submittedAt", "")
         })
 
-        # Determine routing
-        if outcome == "closed_positive":
-            routing = "CLOSED_DEALS"
-            state["done"][matching_key]["routing"] = routing
-            log.info("✅ CLOSED DEAL: %s → נסלקו כבר folder", client_name)
+        # Determine routing based on meeting type and outcome
+        if meeting_type == "sales_call":
+            # Sales calls: route by outcome
+            if outcome == "closed_positive":
+                routing = "CLOSED_DEALS"
+                state["done"][matching_key]["routing"] = routing
+                log.info("✅ CLOSED DEAL: %s → נסלקו כבר folder", client_name)
 
-        elif outcome == "closed_negative":
-            routing = "CLOSED_NEGATIVE"
-            state["done"][matching_key]["routing"] = routing
-            log.info("❌ CLOSED NEGATIVE: %s → archive", client_name)
+            elif outcome == "closed_negative":
+                routing = "CLOSED_NEGATIVE"
+                state["done"][matching_key]["routing"] = routing
+                log.info("❌ CLOSED NEGATIVE: %s → archive", client_name)
 
-        elif outcome in ["open_interested", "open_thinking"]:
-            routing = "OPEN_LEADS"
-            state["done"][matching_key]["routing"] = routing
-            log.info("🔄 OPEN: %s → open leads folder", client_name)
+            elif outcome in ["open_interested", "open_thinking"]:
+                routing = "OPEN_LEADS"
+                state["done"][matching_key]["routing"] = routing
+                log.info("🔄 OPEN: %s → open leads folder", client_name)
 
-        elif outcome == "follow_needed":
-            if followup_date:
-                reminder_time = datetime.fromisoformat(followup_date).isoformat()
-                state["done"][matching_key]["routing"] = "OPEN_LEADS"
-                state["done"][matching_key]["reminder_at"] = reminder_time
-                log.info("⏳ FOLLOW-UP SET: %s → %s", client_name, followup_date)
+            elif outcome == "follow_needed":
+                if followup_date:
+                    reminder_time = datetime.fromisoformat(followup_date).isoformat()
+                    state["done"][matching_key]["routing"] = "OPEN_LEADS"
+                    state["done"][matching_key]["reminder_at"] = reminder_time
+                    log.info("⏳ FOLLOW-UP SET: %s → %s", client_name, followup_date)
+
+        elif meeting_type == "team_call":
+            routing = "TEAM_FOLDER"
+            state["done"][matching_key]["routing"] = routing
+            log.info("👥 TEAM CALL: %s → team folder", client_name)
+
+        elif meeting_type.startswith("other"):
+            routing = "OTHER_FOLDER"
+            state["done"][matching_key]["routing"] = routing
+            log.info("❓ OTHER: %s → general folder", client_name)
 
         save_state(state)
         return True

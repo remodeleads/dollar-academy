@@ -287,10 +287,41 @@
             <div class="error-message" id="errorMsg"></div>
 
             <form id="outcomeForm">
+                <!-- Meeting Type Classification -->
+                <div class="form-group" id="meetingTypeGroup" style="display: none;">
+                    <label>סוג הפגישה <span class="required">*</span></label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <label class="option-label">
+                                <input type="radio" name="meetingType" value="sales_call" required>
+                                📈 תהליך מכירה (לאקדמיית הדולר)
+                            </label>
+                        </div>
+                        <div class="radio-option">
+                            <label class="option-label">
+                                <input type="radio" name="meetingType" value="team_call" required>
+                                👥 זום צוות (רימודלידס)
+                            </label>
+                        </div>
+                        <div class="radio-option">
+                            <label class="option-label">
+                                <input type="radio" name="meetingType" value="other" required>
+                                ❓ סוג אחר
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Meeting Name (if "other" selected) -->
+                <div class="form-group" id="customMeetingGroup" style="display: none;">
+                    <label for="customMeetingName">שם הפגישה (זהן ידנית) <span class="required">*</span></label>
+                    <input type="text" id="customMeetingName" name="customMeetingName" placeholder="לדוגמה: פנימי, בדיקה טכנית, וכו'">
+                </div>
+
                 <!-- Client Name -->
                 <div class="form-group">
-                    <label for="clientName">שם הלקוח <span class="required">*</span></label>
-                    <input type="text" id="clientName" name="clientName" readonly style="background: #f5f5f5; cursor: not-allowed;">
+                    <label for="clientName">שם הלקוח / התופעה <span class="required">*</span></label>
+                    <input type="text" id="clientName" name="clientName" placeholder="שם הלקוח או תיאור הפגישה">
                 </div>
 
                 <!-- Call Date -->
@@ -385,11 +416,36 @@
     </div>
 
     <script>
-        // Pre-fill client name and date from URL params
+        // Pre-fill from URL params
         const params = new URLSearchParams(window.location.search);
-        document.getElementById('clientName').value = decodeURIComponent(params.get('client') || 'לקוח');
-
+        const meetingType = params.get('meeting_type');
+        const clientName = decodeURIComponent(params.get('client') || '');
         const dateStr = params.get('date');
+
+        // Handle meeting type detection
+        const meetingTypeGroup = document.getElementById('meetingTypeGroup');
+        const customMeetingGroup = document.getElementById('customMeetingGroup');
+
+        if (meetingType) {
+            // Meeting type was pre-detected
+            document.querySelector(`input[name="meetingType"][value="${meetingType}"]`).checked = true;
+        } else {
+            // Show meeting type selector if not pre-detected
+            meetingTypeGroup.style.display = 'block';
+        }
+
+        // Handle meeting type selection
+        document.querySelectorAll('input[name="meetingType"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                customMeetingGroup.style.display = e.target.value === 'other' ? 'block' : 'none';
+                if (e.target.value !== 'other') {
+                    document.getElementById('customMeetingName').value = '';
+                }
+            });
+        });
+
+        // Pre-fill client name and date
+        document.getElementById('clientName').value = clientName;
         if (dateStr) {
             document.getElementById('callDate').value = dateStr;
         }
@@ -398,9 +454,14 @@
         document.getElementById('outcomeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            const meetingTypeElement = document.querySelector('input[name="meetingType"]:checked');
+            const meetingType = meetingTypeElement ? meetingTypeElement.value : 'unknown';
+
             const formData = {
                 clientName: document.getElementById('clientName').value,
                 callDate: document.getElementById('callDate').value,
+                meetingType: meetingType,
+                customMeetingName: document.getElementById('customMeetingName').value,
                 outcome: document.querySelector('input[name="outcome"]:checked').value,
                 followupDate: document.getElementById('followupDate').value,
                 keyPoints: document.getElementById('keyPoints').value,
