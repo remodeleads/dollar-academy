@@ -3,16 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>דוח תוצאות פגישת מכירה - אקדמיית הדולר</title>
+    <title>סיכום פגישה - אקדמיית הדולר</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #001a4d 0%, #0033cc 100%);
             min-height: 100vh;
             display: flex;
@@ -20,113 +15,64 @@
             justify-content: center;
             padding: 20px;
         }
-
         .container {
             background: white;
-            border-radius: 16px;
+            border-radius: 12px;
             box-shadow: 0 20px 60px rgba(0, 26, 77, 0.3);
-            max-width: 600px;
+            max-width: 500px;
             width: 100%;
             overflow: hidden;
         }
-
         .header {
             background: white;
             border-bottom: 3px solid #000;
-            padding: 30px;
+            padding: 24px;
             text-align: center;
         }
-
-        .logo {
-            width: 80px;
-            height: auto;
-            margin: 0 auto 20px;
-        }
-
-        .logo svg {
-            width: 100%;
-            height: auto;
-        }
-
-        .header-title {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: #000;
-        }
-
-        .header-subtitle {
-            font-size: 14px;
-            font-weight: 300;
-            color: #666;
-        }
-
-        .form-content {
-            padding: 40px 30px;
-        }
-
-        .form-group {
-            margin-bottom: 30px;
-        }
-
-        .form-group:last-child {
-            margin-bottom: 0;
-        }
-
+        .logo { width: 60px; height: auto; margin: 0 auto 12px; }
+        .logo svg { width: 100%; height: auto; }
+        .header-title { font-size: 18px; font-weight: 600; color: #000; margin-bottom: 4px; }
+        .header-subtitle { font-size: 13px; color: #666; }
+        .form-content { padding: 24px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group:last-child { margin-bottom: 0; }
         label {
             display: block;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
-            color: #001a4d;
+            color: #000;
             margin-bottom: 8px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-
-        .required {
-            color: #ff4444;
-        }
-
+        .required { color: #ff4444; }
         input[type="text"],
-        input[type="email"],
         input[type="date"],
         textarea,
         select {
             width: 100%;
             padding: 12px 14px;
-            border: 2px solid #e0e0e0;
+            border: 0.5px solid #ddd;
             border-radius: 8px;
             font-size: 14px;
             font-family: inherit;
             transition: all 0.3s ease;
             background: white;
         }
-
-        input[type="text"]:focus,
-        input[type="email"]:focus,
-        input[type="date"]:focus,
+        input:focus,
         textarea:focus,
         select:focus {
             outline: none;
             border-color: #0033cc;
             box-shadow: 0 0 0 3px rgba(0, 51, 204, 0.1);
         }
-
+        input[readonly] { background: #f5f5f5; cursor: not-allowed; }
         textarea {
             resize: vertical;
-            min-height: 100px;
-            font-family: inherit;
+            min-height: 60px;
         }
-
-        .radio-group,
-        .checkbox-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .radio-option,
-        .checkbox-option {
+        .radio-group { display: flex; flex-direction: column; gap: 10px; }
+        .radio-option {
             display: flex;
             align-items: center;
             padding: 10px;
@@ -134,134 +80,40 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-
-        .radio-option:hover,
-        .checkbox-option:hover {
-            background: #f5f5f5;
-        }
-
-        input[type="radio"],
-        input[type="checkbox"] {
+        .radio-option:hover { background: #f5f5f5; }
+        input[type="radio"] {
             margin-left: 10px;
             width: 18px;
             height: 18px;
             cursor: pointer;
             accent-color: #0033cc;
         }
-
-        .option-label {
-            cursor: pointer;
-            font-size: 14px;
-            color: #333;
-            flex: 1;
-        }
-
+        .option-label { cursor: pointer; font-size: 14px; color: #333; flex: 1; }
         .button-group {
             display: flex;
             gap: 12px;
-            margin-top: 40px;
+            margin-top: 24px;
         }
-
         button {
             flex: 1;
-            padding: 14px 20px;
+            padding: 12px 16px;
             border: none;
             border-radius: 8px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
-
         .submit-btn {
             background: linear-gradient(135deg, #001a4d 0%, #0033cc 100%);
             color: white;
         }
-
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 51, 204, 0.3);
-        }
-
-        .submit-btn:active {
-            transform: translateY(0);
-        }
-
-        .reset-btn {
-            background: #f0f0f0;
-            color: #333;
-        }
-
-        .reset-btn:hover {
-            background: #e0e0e0;
-        }
-
-        .success-message {
-            display: none;
-            background: #e8f5e9;
-            border: 2px solid #4caf50;
-            color: #2e7d32;
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-weight: 600;
-        }
-
-        .error-message {
-            display: none;
-            background: #ffebee;
-            border: 2px solid #f44336;
-            color: #c62828;
-            padding: 16px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-weight: 600;
-        }
-
-        .info-box {
-            background: #e3f2fd;
-            border-right: 4px solid #0033cc;
-            padding: 14px;
-            border-radius: 4px;
-            margin-top: 30px;
-            font-size: 12px;
-            color: #0d47a1;
-            line-height: 1.6;
-        }
-
-        @media (max-width: 600px) {
-            .form-content {
-                padding: 25px 20px;
-            }
-
-            .header {
-                padding: 30px 20px;
-            }
-
-            .logo {
-                font-size: 36px;
-            }
-
-            .header-title {
-                font-size: 18px;
-            }
-
-            .button-group {
-                flex-direction: column;
-            }
-        }
-
-        /* Loading animation */
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
+        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 51, 204, 0.3); }
+        .reset-btn { background: #f0f0f0; color: #333; }
+        .reset-btn:hover { background: #e0e0e0; }
+        .success-message { display: none; background: #e8f5e9; border: 2px solid #4caf50; color: #2e7d32; padding: 16px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
+        .error-message { display: none; background: #ffebee; border: 2px solid #f44336; color: #c62828; padding: 16px; border-radius: 8px; margin-bottom: 20px; }
+        .loading { display: none; text-align: center; padding: 20px; }
         .spinner {
             border: 4px solid #f3f3f3;
             border-top: 4px solid #0033cc;
@@ -271,11 +123,7 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 10px;
         }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -283,80 +131,45 @@
         <div class="header">
             <div class="logo">
                 <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Outer D shape -->
-                    <path d="M 20 15 L 50 15 Q 70 15 70 50 Q 70 85 50 85 L 20 85 Z"
-                          fill="none" stroke="black" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
-                    <!-- Inner D shape -->
-                    <path d="M 30 30 L 50 30 Q 60 30 60 50 Q 60 70 50 70 L 30 70 Z"
-                          fill="none" stroke="black" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M 20 15 L 50 15 Q 70 15 70 50 Q 70 85 50 85 L 20 85 Z" fill="none" stroke="black" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M 30 30 L 50 30 Q 60 30 60 50 Q 60 70 50 70 L 30 70 Z" fill="none" stroke="black" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
             </div>
-            <div class="header-title">דוח תוצאות פגישה</div>
-            <div class="header-subtitle">אקדמיית הדולר - מערכת ניתוח שיחות מכירה</div>
+            <div class="header-title">סיכום פגישה</div>
+            <div class="header-subtitle">אקדמיית הדולר</div>
         </div>
 
         <div class="form-content">
-            <div class="success-message" id="successMsg">✅ הדוח נשלח בהצלחה!</div>
+            <div class="success-message" id="successMsg">✅ סיכום הפגישה נשלח! הסוכן שלנו כבר מנתח את השיחה...</div>
             <div class="error-message" id="errorMsg"></div>
 
             <form id="outcomeForm">
-                <!-- Meeting Type Classification -->
-                <div class="form-group" id="meetingTypeGroup" style="display: none;">
-                    <label>סוג הפגישה <span class="required">*</span></label>
-                    <div class="radio-group">
-                        <div class="radio-option">
-                            <label class="option-label">
-                                <input type="radio" name="meetingType" value="sales_call" required>
-                                📈 תהליך מכירה (לאקדמיית הדולר)
-                            </label>
-                        </div>
-                        <div class="radio-option">
-                            <label class="option-label">
-                                <input type="radio" name="meetingType" value="team_call" required>
-                                👥 זום צוות (רימודלידס)
-                            </label>
-                        </div>
-                        <div class="radio-option">
-                            <label class="option-label">
-                                <input type="radio" name="meetingType" value="other" required>
-                                ❓ סוג אחר
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Custom Meeting Name (if "other" selected) -->
-                <div class="form-group" id="customMeetingGroup" style="display: none;">
-                    <label for="customMeetingName">שם הפגישה (זהן ידנית) <span class="required">*</span></label>
-                    <input type="text" id="customMeetingName" name="customMeetingName" placeholder="לדוגמה: פנימי, בדיקה טכנית, וכו'">
-                </div>
-
                 <!-- Client Name -->
                 <div class="form-group">
-                    <label for="clientName">שם הלקוח / התופעה <span class="required">*</span></label>
-                    <input type="text" id="clientName" name="clientName" placeholder="שם הלקוח או תיאור הפגישה">
+                    <label for="clientName">לקוח <span class="required">*</span></label>
+                    <input type="text" id="clientName" name="clientName" readonly>
                 </div>
 
-                <!-- Call Date -->
+                <!-- Date -->
                 <div class="form-group">
-                    <label for="callDate">תאריך הפגישה <span class="required">*</span></label>
-                    <input type="date" id="callDate" name="callDate" readonly style="background: #f5f5f5; cursor: not-allowed;">
+                    <label for="callDate">תאריך <span class="required">*</span></label>
+                    <input type="date" id="callDate" name="callDate" readonly>
                 </div>
 
-                <!-- Call Outcome (Required for sales calls) -->
-                <div class="form-group" id="outcomeGroup">
-                    <label>מה היתה תוצאת הפגישה? <span class="required">*</span></label>
+                <!-- Outcome -->
+                <div class="form-group">
+                    <label>תוצאה <span class="required">*</span></label>
                     <div class="radio-group">
                         <div class="radio-option">
                             <label class="option-label">
                                 <input type="radio" name="outcome" value="closed_positive" required>
-                                ✅ נסלק (סגור בהצלחה)
+                                ✅ נסלק
                             </label>
                         </div>
                         <div class="radio-option">
                             <label class="option-label">
                                 <input type="radio" name="outcome" value="follow_needed" required>
-                                📞 פולואפ בתאריך מסוים
+                                📞 פולואפ
                             </label>
                         </div>
                         <div class="radio-option">
@@ -368,132 +181,53 @@
                         <div class="radio-option">
                             <label class="option-label">
                                 <input type="radio" name="outcome" value="not_suitable" required>
-                                🚫 לא מתאים / לא רלוונטי
+                                🚫 לא מתאים
                             </label>
                         </div>
                     </div>
                 </div>
 
-                <!-- Follow-up Date -->
-                <div class="form-group">
-                    <label for="followupDate">תאריך הפולואפ (אם רלוונטי)</label>
-                    <input type="date" id="followupDate" name="followupDate">
-                </div>
-
-                <!-- Key Points -->
-                <div class="form-group">
-                    <label for="keyPoints">נקודות חשובות מהפגישה</label>
-                    <textarea id="keyPoints" name="keyPoints" placeholder="מה היו הנקודות המפתח בדיון? אילו שאלות היו? אילו התנגדויות?"></textarea>
-                </div>
-
-                <!-- Next Steps -->
-                <div class="form-group">
-                    <label for="nextSteps">צעדים הבאים <span class="required">*</span></label>
-                    <textarea id="nextSteps" name="nextSteps" placeholder="מה צריך לעשות כדי להמשיך? איזה משימות יש לך? האם הוא צריך לעשות משהו?" required></textarea>
-                </div>
-
-                <!-- Deal Value (if closed positive) -->
-                <div class="form-group">
-                    <label for="dealValue">שווי ההזדמנות / הסליקה ($)</label>
-                    <input type="text" id="dealValue" name="dealValue" placeholder="דוגמה: 5000">
-                </div>
-
                 <!-- Notes -->
                 <div class="form-group">
-                    <label for="notes">הערות כלליות</label>
-                    <textarea id="notes" name="notes" placeholder="כל הערה אחרת שחשובה לך..."></textarea>
+                    <label for="notes">הערות (אופציונלי)</label>
+                    <textarea id="notes" name="notes" placeholder="משהו שחשוב לך להוסיף..."></textarea>
                 </div>
 
                 <!-- Buttons -->
                 <div class="button-group">
-                    <button type="submit" class="submit-btn">📤 שלח דוח</button>
-                    <button type="reset" class="reset-btn">🔄 נקה</button>
+                    <button type="submit" class="submit-btn">שלח</button>
+                    <button type="reset" class="reset-btn">נקה</button>
                 </div>
 
                 <div class="loading" id="loading">
                     <div class="spinner"></div>
-                    <p>שולח דוח...</p>
-                </div>
-
-                <div class="info-box">
-                    💡 <strong>טיפ:</strong> הדוח הזה מוזן אוטומטית לתוך מערכת הניתוח שלנו. הנתונים משמשים לשיפור תהליכי המכירה ודוחות חכמים.
+                    <p>שולח...</p>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-        // Pre-fill from URL params
         const params = new URLSearchParams(window.location.search);
-        const meetingType = params.get('meeting_type');
-        const clientName = decodeURIComponent(params.get('client') || '');
+        document.getElementById('clientName').value = decodeURIComponent(params.get('client') || '');
         const dateStr = params.get('date');
-        const meetingTitle = decodeURIComponent(params.get('title') || '');
+        if (dateStr) document.getElementById('callDate').value = dateStr;
 
-        // Handle meeting type detection
-        const meetingTypeGroup = document.getElementById('meetingTypeGroup');
-        const customMeetingGroup = document.getElementById('customMeetingGroup');
-        const outcomeGroup = document.getElementById('outcomeGroup');
-
-        if (meetingType) {
-            // Meeting type was pre-detected
-            document.querySelector(`input[name="meetingType"][value="${meetingType}"]`).checked = true;
-
-            // Show/hide outcome group based on meeting type
-            if (meetingType === 'sales_call') {
-                outcomeGroup.style.display = 'block';
-            } else {
-                outcomeGroup.style.display = 'none';
-            }
-        } else {
-            // Show meeting type selector if not pre-detected
-            meetingTypeGroup.style.display = 'block';
-        }
-
-        // Handle meeting type selection
-        document.querySelectorAll('input[name="meetingType"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                customMeetingGroup.style.display = e.target.value === 'other' ? 'block' : 'none';
-                outcomeGroup.style.display = e.target.value === 'sales_call' ? 'block' : 'none';
-                if (e.target.value !== 'other') {
-                    document.getElementById('customMeetingName').value = '';
-                }
-            });
-        });
-
-        // Pre-fill from calendar event
-        document.getElementById('clientName').value = clientName || meetingTitle || '';
-        if (dateStr) {
-            document.getElementById('callDate').value = dateStr;
-        }
-
-        // Handle form submission
         document.getElementById('outcomeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-
-            const meetingTypeElement = document.querySelector('input[name="meetingType"]:checked');
-            const meetingType = meetingTypeElement ? meetingTypeElement.value : 'unknown';
 
             const formData = {
                 clientName: document.getElementById('clientName').value,
                 callDate: document.getElementById('callDate').value,
-                meetingType: meetingType,
-                customMeetingName: document.getElementById('customMeetingName').value,
                 outcome: document.querySelector('input[name="outcome"]:checked').value,
-                followupDate: document.getElementById('followupDate').value,
-                keyPoints: document.getElementById('keyPoints').value,
-                nextSteps: document.getElementById('nextSteps').value,
-                dealValue: document.getElementById('dealValue').value,
                 notes: document.getElementById('notes').value,
                 submittedAt: new Date().toISOString()
             };
 
-            // Show loading
             document.getElementById('loading').style.display = 'block';
             document.querySelector('.submit-btn').disabled = true;
 
             try {
-                // Send to backend (adjust URL as needed)
                 const response = await fetch('/api/submit_outcome', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -504,15 +238,7 @@
                     document.getElementById('successMsg').style.display = 'block';
                     document.getElementById('errorMsg').style.display = 'none';
                     document.getElementById('outcomeForm').reset();
-
-                    // Hide loading after 2 seconds
-                    setTimeout(() => {
-                        document.getElementById('loading').style.display = 'none';
-                        document.querySelector('.submit-btn').disabled = false;
-                    }, 2000);
-
-                    // Close window after 3 seconds
-                    setTimeout(() => window.close(), 3000);
+                    setTimeout(() => window.close(), 2000);
                 } else {
                     throw new Error('שגיאה בשליחת הדוח');
                 }
