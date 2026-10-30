@@ -220,11 +220,11 @@ def start_server():
 
 
 def main():
+    global PORT
     ap = argparse.ArgumentParser(description="Outcome form server")
     ap.add_argument("--port", type=int, default=PORT, help=f"Port to run on (default: {PORT})")
     args = ap.parse_args()
 
-    global PORT
     PORT = args.port
 
     start_server()
